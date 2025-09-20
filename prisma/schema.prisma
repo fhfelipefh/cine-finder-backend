@@ -10,19 +10,41 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DB_URL")
+  url      = env("DATABASE_URL")
 }
 
-model Comment {
+model Author {
   id       Int      @id @default(autoincrement())
-  imdbId   String
-  author   String
-  rating   Int
-  comment  String
+  name     String
   ipHash   String
+  comments Comment[]
+
+  @@unique([name, ipHash])
+  @@map("authors")
+}
+
+model Movie {
+  id       Int      @id @default(autoincrement())
+  imdbId   String   @unique
+  comments Comment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([imdbId])
+  @@map("movies")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    Author   @relation(fields: [authorId], references: [id])
+  authorId  Int
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  movieId   Int
+
+  @@index([movieId])
   @@map("comments")
 }
