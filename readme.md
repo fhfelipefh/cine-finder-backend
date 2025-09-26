@@ -21,3 +21,5 @@ Depois disso, o fluxo é:
 4. Subir: `npm start`
 
 Na rota base `/api` tem os endpoints de comentários (`/comments`). Ex.: `GET /api/comments/tt1234567` para listar por IMDb ID.
+
+TODO: Rankings de filmes, usuário pode votar em filmes e a lista é compartilhada com outros usuários que também podem votar.
