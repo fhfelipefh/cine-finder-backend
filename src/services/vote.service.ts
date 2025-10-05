@@ -10,31 +10,38 @@ function getIpHash(ip: string, salt?: string) {
 export class VoteService {
   private readonly repo = new VoteRepository();
 
-  async upsert(ip: string, imdbId: string, rating: number) {
-    const ipHash = getIpHash(ip, process.env.IP_HASH_SALT);
-    return this.repo.upsertVote({ imdbId, ipHash, rating });
+  private identityFrom(ip: string, uuid?: string) {
+    const basis = (uuid && uuid.trim().length > 0) ? `uuid:${uuid.trim()}` : `ip:${ip}`;
+    const ipHash = getIpHash(basis, process.env.IP_HASH_SALT);
+    const identityType: 'ip' | 'uuid' = (uuid && uuid.trim().length > 0) ? 'uuid' : 'ip';
+    return { ipHash, identityType } as const;
   }
 
-  async listMine(ip: string, page = 1, pageSize = 20) {
-    const ipHash = getIpHash(ip, process.env.IP_HASH_SALT);
-    return this.repo.listMyVotes(ipHash, page, pageSize);
+  async upsert(ip: string, imdbId: string, rating: number, uuid?: string) {
+    const id = this.identityFrom(ip, uuid);
+    return this.repo.upsertVote({ imdbId, ipHash: id.ipHash, rating, identityType: id.identityType });
   }
 
-  async getById(ip: string, id: string) {
-    const ipHash = getIpHash(ip, process.env.IP_HASH_SALT);
+  async listMine(ip: string, page = 1, pageSize = 20, uuid?: string) {
+    const id = this.identityFrom(ip, uuid);
+    return this.repo.listMyVotes(id.ipHash, page, pageSize);
+  }
+
+  async getById(ip: string, id: string, uuid?: string) {
+    const ident = this.identityFrom(ip, uuid);
     const doc = await this.repo.getById(id);
     if (!doc) throw new Error('Voto não encontrado');
-    if (doc.ipHash !== ipHash) throw new Error('Permissão negada');
+    if (doc.ipHash !== ident.ipHash) throw new Error('Permissão negada');
     return doc;
   }
 
-  async updateById(ip: string, id: string, rating: number) {
-    const current = await this.getById(ip, id);
-    return this.repo.upsertVote({ imdbId: current.imdbId, ipHash: current.ipHash, rating });
+  async updateById(ip: string, id: string, rating: number, uuid?: string) {
+    const current = await this.getById(ip, id, uuid);
+    return this.repo.upsertVote({ imdbId: current.imdbId, ipHash: current.ipHash, rating, identityType: current.identityType });
   }
 
-  async remove(ip: string, id: string) {
-  const myVotes = await this.listMine(ip, 1, 1_000);
+  async remove(ip: string, id: string, uuid?: string) {
+  const myVotes = await this.listMine(ip, 1, 1_000, uuid);
   const found = myVotes.items.find((v: any) => v.id === id);
     if (!found) throw new Error('Permissão negada');
     return this.repo.delete(id);

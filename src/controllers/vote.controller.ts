@@ -41,7 +41,8 @@ export class VoteController {
     try {
       const { imdbId, rating } = upsertVoteSchema.parse(req.body);
       const ip = this.getIp(req);
-      const doc = await this.service.upsert(ip, imdbId, rating);
+      const clientUuid = (req.headers['x-client-uuid'] as string) || (req.query.uuid as string) || (req.body?.uuid as string);
+      const doc = await this.service.upsert(ip, imdbId, rating, clientUuid);
       res.status(201).json({ success: true, data: doc });
     } catch (err) {
       return this.handleError(res, err);
@@ -53,7 +54,8 @@ export class VoteController {
       const ip = this.getIp(req);
       const page = req.query.page ? Number(req.query.page) : 1;
       const pageSize = req.query.pageSize ? Number(req.query.pageSize) : 20;
-      const result = await this.service.listMine(ip, page, pageSize);
+      const clientUuid = (req.headers['x-client-uuid'] as string) || (req.query.uuid as string);
+      const result = await this.service.listMine(ip, page, pageSize, clientUuid);
       res.json({ success: true, data: result });
     } catch (err) {
       return this.handleError(res, err);
@@ -64,7 +66,8 @@ export class VoteController {
     try {
       const { id } = idParam.parse(req.params);
       const ip = this.getIp(req);
-      await this.service.remove(ip, id);
+      const clientUuid = (req.headers['x-client-uuid'] as string) || (req.query.uuid as string);
+      await this.service.remove(ip, id, clientUuid);
       res.json({ success: true, message: 'Voto removido' });
     } catch (err) {
       return this.handleError(res, err);
@@ -75,7 +78,8 @@ export class VoteController {
     try {
       const { id } = idParam.parse(req.params);
       const ip = this.getIp(req);
-      const doc = await this.service.getById(ip, id);
+      const clientUuid = (req.headers['x-client-uuid'] as string) || (req.query.uuid as string);
+      const doc = await this.service.getById(ip, id, clientUuid);
       res.json({ success: true, data: doc });
     } catch (err) {
       return this.handleError(res, err);
@@ -87,7 +91,8 @@ export class VoteController {
       const { id } = idParam.parse(req.params);
       const body = z.object({ rating: z.number().int().min(1).max(10) }).parse(req.body);
       const ip = this.getIp(req);
-      const doc = await this.service.updateById(ip, id, body.rating);
+      const clientUuid = (req.headers['x-client-uuid'] as string) || (req.query.uuid as string) || (req.body?.uuid as string);
+      const doc = await this.service.updateById(ip, id, body.rating, clientUuid);
       res.json({ success: true, data: doc });
     } catch (err) {
       return this.handleError(res, err);

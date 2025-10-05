@@ -29,6 +29,7 @@ const VoteSchema = new Schema(
     imdbId: { type: String, required: true, index: true },
     ipHash: { type: String, required: true, index: true },
     rating: { type: Number, required: true, min: 1, max: 10 },
+    identityType: { type: String, enum: ['ip', 'uuid'], default: 'ip' },
   },
   { timestamps: true, versionKey: false, collection: "votes" }
 );

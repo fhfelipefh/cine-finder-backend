@@ -2,11 +2,11 @@ import mongoose, { type PipelineStage } from 'mongoose';
 import { getVoteModel } from '../config/database.js';
 
 export class VoteRepository {
-  async upsertVote(data: { imdbId: string; ipHash: string; rating: number }) {
+  async upsertVote(data: { imdbId: string; ipHash: string; rating: number; identityType?: 'ip' | 'uuid' }) {
     const Vote = getVoteModel();
     const doc = await Vote.findOneAndUpdate(
       { imdbId: data.imdbId, ipHash: data.ipHash },
-      { $set: { rating: data.rating } },
+      { $set: { rating: data.rating, identityType: data.identityType ?? 'ip' } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean({ virtuals: true });
     return doc;
