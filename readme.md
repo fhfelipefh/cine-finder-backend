@@ -1,25 +1,37 @@
 # Cine Finder - Backend
 
-API para gerenciar comentários de filmes pelo IMDb ID.
+API para gerenciar comentários e ranking/votos de filmes pelo IMDb ID.
 
-Usei Express, Prisma (PostgreSQL).
+Stack: Express + MongoDB (Mongoose).
 
 A ideia é ter endpoints básicos para listar, criar, editar e remover comentários, mantendo um controle leve por IP (hash) e filtrando palavrões.
 
 ## Execução
 
-- Requisitos: Node 20+ e um banco Postgres.
+- Requisitos: Node 20+ e um MongoDB (Atlas recomendado).
 - Crie o arquivo `.env` com pelo menos:
-  - `DATABASE_URL` (string de conexão do Postgres)
+  - `DB_URL` (string de conexão do MongoDB)
   - `IP_HASH_SALT` (qualquer string aleatória pra gerar o hash do IP)
 
 Depois disso, o fluxo é:
 
 1. Instalar deps: `npm install`
-2. Rodar migrações e gerar o Prisma Client (dev): `npx prisma migrate dev`
-3. Buildar: `npm run build`
-4. Subir: `npm start`
+2. Buildar: `npm run build`
+3. Subir: `npm start`
 
-Na rota base `/api` tem os endpoints de comentários (`/comments`). Ex.: `GET /api/comments/tt1234567` para listar por IMDb ID.
+Endpoints principais (base `/api`):
 
-TODO: Rankings de filmes, usuário pode votar em filmes e a lista é compartilhada com outros usuários que também podem votar.
+- Comentários `/comments`
+  - `GET /comments/:imdbId` – lista comentários por filme (paginação via query `page`, `pageSize`)
+  - `POST /comments` – cria comentário `{ imdbId, author, rating, comment }`
+  - `PUT /comments/:id` – edita seu comentário (valida IP por hash, janela de 10 minutos)
+  - `DELETE /comments/:id` – remove seu comentário (mesmas regras)
+
+- Votos e Ranking `/votes`
+  - `GET /votes/me` – lista meus votos (por IP)
+  - `POST /votes` – cria/atualiza voto `{ imdbId, rating }` (um voto por IP por filme)
+  - `GET /votes/by-id/:id` – ver detalhe de um voto meu (id = ObjectId 24 hex)
+  - `PUT /votes/by-id/:id` – editar nota de um voto meu `{ rating }`
+  - `DELETE /votes/by-id/:id` – remove meu voto
+  - `GET /votes/ranking` – ranking geral (média e contagem por filme)
+  - `GET /votes/ranking/:imdbId` – estatísticas de um filme

@@ -85,9 +85,9 @@ export class CommentController {
   async update(req: Request, res: Response) {
     try {
       const ip = this.getIp(req);
-      const { id } = idParamSchema.parse(req.params);
-      const payload = updateCommentSchema.parse(req.body);
-      const updated = await this.service.update(ip, id, payload);
+  const { id } = idParamSchema.parse(req.params);
+  const payload = updateCommentSchema.parse(req.body);
+  const updated = await this.service.update(ip, id, payload);
       res.json({ success: true, data: updated });
     } catch (error) {
       return this.handleError(res, error, { allowProfanity: true });
@@ -97,8 +97,8 @@ export class CommentController {
   async remove(req: Request, res: Response) {
     try {
       const ip = this.getIp(req);
-      const { id } = idParamSchema.parse(req.params);
-      await this.service.remove(ip, id);
+  const { id } = idParamSchema.parse(req.params);
+  await this.service.remove(ip, id);
       res.json({ success: true, message: "Comentário removido" });
     } catch (error) {
       return this.handleError(res, error);

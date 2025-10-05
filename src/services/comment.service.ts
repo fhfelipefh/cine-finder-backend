@@ -39,7 +39,7 @@ export class CommentService {
     return now - created <= this.windowMs;
   }
 
-  async update(ip: string, id: number, data: UpdateCommentInput) {
+  async update(ip: string, id: string, data: UpdateCommentInput) {
     if (
       (data.author && hasProfanity(data.author)) ||
       (data.comment && hasProfanity(data.comment))
@@ -49,18 +49,18 @@ export class CommentService {
     const existing = await this.repo.getById(id);
     if (!existing) throw new Error("Comentário não encontrado");
     const ipHash = getIpHash(ip, process.env.IP_HASH_SALT);
-    if (existing.author.ipHash !== ipHash) throw new Error("Permissão negada");
-    const allowed = await this.canMutate(ip, existing.createdAt);
+    if (existing.ipHash !== ipHash) throw new Error("Permissão negada");
+    const allowed = await this.canMutate(ip, new Date(existing.createdAt));
     if (!allowed) throw new Error("Janela de edição/remoção expirada");
     return this.repo.update(id, data, ipHash);
   }
 
-  async remove(ip: string, id: number) {
+  async remove(ip: string, id: string) {
     const existing = await this.repo.getById(id);
     if (!existing) throw new Error("Comentário não encontrado");
     const ipHash = getIpHash(ip, process.env.IP_HASH_SALT);
-    if (existing.author.ipHash !== ipHash) throw new Error("Permissão negada");
-    const allowed = await this.canMutate(ip, existing.createdAt);
+    if (existing.ipHash !== ipHash) throw new Error("Permissão negada");
+    const allowed = await this.canMutate(ip, new Date(existing.createdAt));
     if (!allowed) throw new Error("Janela de edição/remoção expirada");
     return this.repo.delete(id);
   }

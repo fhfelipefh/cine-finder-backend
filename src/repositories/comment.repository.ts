@@ -1,33 +1,26 @@
-import { prisma } from "../config/database.js";
+import mongoose from "mongoose";
+import { getCommentModel } from "../config/database.js";
 import type { UpdateCommentInput } from "../models/comment.model.js";
 
 export class CommentRepository {
   async listByImdb(imdbId: string, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize;
+    const Comment = getCommentModel();
     const [items, total] = await Promise.all([
-      prisma.comment.findMany({
-        where: { movie: { imdbId } },
-        include: {
-          author: { select: { id: true, name: true } },
-          movie: { select: { id: true, imdbId: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
-      }),
-      prisma.comment.count({ where: { movie: { imdbId } } }),
+      Comment.find({ imdbId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .lean({ virtuals: true }),
+      Comment.countDocuments({ imdbId }),
     ]);
     return { items, total, page, pageSize };
   }
 
-  async getById(id: number) {
-    return prisma.comment.findUnique({
-      where: { id },
-      include: {
-        author: { select: { id: true, name: true, ipHash: true } },
-        movie: { select: { id: true, imdbId: true } },
-      },
-    });
+  async getById(id: string) {
+    const Comment = getCommentModel();
+    if (!mongoose.isValidObjectId(id)) return null;
+    return Comment.findById(id).lean({ virtuals: true });
   }
 
   async create(data: {
@@ -37,60 +30,43 @@ export class CommentRepository {
     comment: string;
     ipHash: string;
   }) {
-    const movie = await prisma.movie.upsert({
-      where: { imdbId: data.imdbId },
-      update: {},
-      create: { imdbId: data.imdbId },
+    const Comment = getCommentModel();
+    const doc = await Comment.create({
+      imdbId: data.imdbId,
+      author: data.author,
+      ipHash: data.ipHash,
+      rating: data.rating,
+      comment: data.comment,
     });
-    const author = await prisma.author.upsert({
-      where: { name_ipHash: { name: data.author, ipHash: data.ipHash } },
-      update: {},
-      create: { name: data.author, ipHash: data.ipHash },
-    });
-    return prisma.comment.create({
-      data: {
-        rating: data.rating,
-        comment: data.comment,
-        authorId: author.id,
-        movieId: movie.id,
-      },
-      include: {
-        author: { select: { id: true, name: true } },
-        movie: { select: { id: true, imdbId: true } },
-      },
-    });
+    return doc.toJSON();
   }
 
   async update(
-    id: number,
+    id: string,
     data: UpdateCommentInput,
     ipHashForAuthorChange?: string
   ) {
-    const updateData: any = {};
+    const Comment = getCommentModel();
+    if (!mongoose.isValidObjectId(id)) throw new Error("Comentário não encontrado");
+    const updateData: Record<string, unknown> = {};
     if (data.rating !== undefined) updateData.rating = data.rating;
     if (data.comment !== undefined) updateData.comment = data.comment;
     if (data.author !== undefined) {
       if (!ipHashForAuthorChange) throw new Error("Permissão negada");
-      const newAuthor = await prisma.author.upsert({
-        where: {
-          name_ipHash: { name: data.author, ipHash: ipHashForAuthorChange },
-        },
-        update: {},
-        create: { name: data.author, ipHash: ipHashForAuthorChange },
-      });
-      updateData.authorId = newAuthor.id;
+      updateData.author = data.author;
     }
-    return prisma.comment.update({
-      where: { id },
-      data: updateData,
-      include: {
-        author: { select: { id: true, name: true } },
-        movie: { select: { id: true, imdbId: true } },
-      },
-    });
+    const updated = await Comment.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    ).lean({ virtuals: true });
+    return updated;
   }
 
-  async delete(id: number) {
-    return prisma.comment.delete({ where: { id } });
+  async delete(id: string) {
+    const Comment = getCommentModel();
+    if (!mongoose.isValidObjectId(id)) throw new Error("Comentário não encontrado");
+    await Comment.findByIdAndDelete(id);
+    return { success: true } as const;
   }
 }

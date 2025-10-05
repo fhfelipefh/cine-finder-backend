@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import pino from 'pino';
 import { apiRoutes } from './routes/index.js';
+import { connectMongo } from './config/database.js';
 
 config();
 
@@ -27,6 +28,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.info({
@@ -61,9 +63,16 @@ app.use((req: express.Request, res: express.Response) => {
   });
 });
 
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, 'Servidor iniciado');
-  logger.info(`API disponível em http://localhost:${PORT}`);
-});
+connectMongo()
+  .then(() => {
+    app.listen(PORT, () => {
+      logger.info({ port: PORT }, 'Servidor iniciado');
+      logger.info(`API disponível em http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    logger.error({ err }, 'Falha ao conectar no MongoDB');
+    process.exit(1);
+  });
 
 export default app;
