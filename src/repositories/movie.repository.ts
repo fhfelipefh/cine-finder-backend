@@ -97,9 +97,6 @@ export class MovieRepository {
           title: data.title ?? data.imdbId.toUpperCase(),
           createdBy: data.createdBy,
         },
-        $set: {
-          title: data.title ?? data.imdbId.toUpperCase(),
-        },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean({ virtuals: true });
