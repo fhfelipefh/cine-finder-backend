@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { config } from "dotenv";
 import pino from "pino";
 import { apiRoutes } from "./routes/index.js";
@@ -22,12 +21,16 @@ const logger =
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "*",
-    credentials: true,
-  })
-);
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  res.header("Access-Control-Allow-Headers", "*");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
