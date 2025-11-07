@@ -1,10 +1,19 @@
-import { Router } from 'express';
-import { commentRoutes } from './comment.routes.js';
-import { voteRoutes } from './vote.routes.js';
+import { Router } from "express";
+import { commentRoutes } from "./comment.routes.js";
+import { voteRoutes } from "./vote.routes.js";
+import { authRoutes } from "./auth.routes.js";
+import { userRoutes } from "./user.routes.js";
+import { movieRoutes } from "./movie.routes.js";
+import { favoriteRoutes } from "./favorite.routes.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.use('/comments', commentRoutes);
-router.use('/votes', voteRoutes);
+router.use("/auth", authRoutes);
+router.use("/movies", authenticate, movieRoutes);
+router.use("/comments", authenticate, commentRoutes);
+router.use("/votes", authenticate, voteRoutes);
+router.use("/users", authenticate, userRoutes);
+router.use("/favorites", authenticate, favoriteRoutes);
 
 export { router as apiRoutes };

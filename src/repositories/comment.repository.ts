@@ -1,72 +1,76 @@
 import mongoose from "mongoose";
 import { getCommentModel } from "../config/database.js";
-import type { UpdateCommentInput } from "../models/comment.model.js";
 
 export class CommentRepository {
+  private model() {
+    return getCommentModel();
+  }
+
   async listByImdb(imdbId: string, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize;
-    const Comment = getCommentModel();
+    const Comment = this.model();
     const [items, total] = await Promise.all([
-      Comment.find({ imdbId })
+      Comment.find({ imdbId: imdbId.toUpperCase() })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pageSize)
         .lean({ virtuals: true }),
-      Comment.countDocuments({ imdbId }),
+      Comment.countDocuments({ imdbId: imdbId.toUpperCase() }),
     ]);
     return { items, total, page, pageSize };
   }
 
   async getById(id: string) {
-    const Comment = getCommentModel();
+    const Comment = this.model();
     if (!mongoose.isValidObjectId(id)) return null;
     return Comment.findById(id).lean({ virtuals: true });
   }
 
   async create(data: {
     imdbId: string;
-    author: string;
-    rating: number;
+    movieId: string;
+    userId: string;
     comment: string;
-    ipHash: string;
+    rating: number;
+    authorName: string;
   }) {
-    const Comment = getCommentModel();
+    const Comment = this.model();
     const doc = await Comment.create({
-      imdbId: data.imdbId,
-      author: data.author,
-      ipHash: data.ipHash,
-      rating: data.rating,
+      imdbId: data.imdbId.toUpperCase(),
+      movie: data.movieId,
+      user: data.userId,
       comment: data.comment,
+      rating: data.rating,
+      authorName: data.authorName,
     });
     return doc.toJSON();
   }
 
   async update(
     id: string,
-    data: UpdateCommentInput,
-    ipHashForAuthorChange?: string
-  ) {
-    const Comment = getCommentModel();
-    if (!mongoose.isValidObjectId(id)) throw new Error("Comentário não encontrado");
-    const updateData: Record<string, unknown> = {};
-    if (data.rating !== undefined) updateData.rating = data.rating;
-    if (data.comment !== undefined) updateData.comment = data.comment;
-    if (data.author !== undefined) {
-      if (!ipHashForAuthorChange) throw new Error("Permissão negada");
-      updateData.author = data.author;
+    data: {
+      comment?: string | undefined;
+      rating?: number | undefined;
     }
-    const updated = await Comment.findByIdAndUpdate(
+  ) {
+    const Comment = this.model();
+    if (!mongoose.isValidObjectId(id)) throw new Error("Comentario nao encontrado");
+    return Comment.findByIdAndUpdate(
       id,
-      { $set: updateData },
+      { $set: data },
       { new: true }
     ).lean({ virtuals: true });
-    return updated;
   }
 
   async delete(id: string) {
-    const Comment = getCommentModel();
-    if (!mongoose.isValidObjectId(id)) throw new Error("Comentário não encontrado");
+    const Comment = this.model();
+    if (!mongoose.isValidObjectId(id)) throw new Error("Comentario nao encontrado");
     await Comment.findByIdAndDelete(id);
     return { success: true } as const;
+  }
+
+  async deleteByUser(userId: string) {
+    const Comment = this.model();
+    await Comment.deleteMany({ user: userId });
   }
 }
