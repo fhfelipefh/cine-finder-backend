@@ -28,7 +28,12 @@ export class CommunityTopController {
   async list(req: Request, res: Response) {
     try {
       const includeVotes = req.user?.role === "admin";
-      const data = await this.service.getList({ includeVotes });
+      const limitRaw = Number(req.query.limit);
+      const limit =
+        !Number.isNaN(limitRaw) && limitRaw > 0
+          ? Math.min(50, Math.max(1, Math.floor(limitRaw)))
+          : 10;
+      const data = await this.service.getList({ includeVotes, limit });
       res.json({ success: true, data });
     } catch (error) {
       return this.handleError(res, error);

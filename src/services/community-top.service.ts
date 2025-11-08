@@ -9,12 +9,16 @@ export class CommunityTopService {
   private readonly movieService = new MovieService();
   private readonly voteRepo = new VoteRepository();
 
-  async getList(opts?: { includeVotes?: boolean }) {
+  async getList(opts?: { includeVotes?: boolean; limit?: number }) {
     const doc = await this.repo.getCurrent();
     if (!doc) {
       return { items: [], updatedAt: null as Date | null };
     }
     const includeVotes = opts?.includeVotes ?? false;
+    const normalizedLimit =
+      typeof opts?.limit === "number" && opts.limit > 0
+        ? Math.min(50, Math.max(1, Math.floor(opts.limit)))
+        : 10;
     const docId = toStringId(doc);
     const items =
       doc.items?.map((item: any) => ({
@@ -29,10 +33,16 @@ export class CommunityTopService {
           }
           : undefined,
       })) ?? [];
+    const limitedItems =
+      normalizedLimit > 0 ? items.slice(0, normalizedLimit) : items;
     let votesByImdb: Record<string, any[]> = {};
-    if (includeVotes && items.length) {
+    if (includeVotes && limitedItems.length) {
       const imdbIds = Array.from(
-        new Set(items.map((item) => item.imdbId?.toUpperCase()).filter(Boolean))
+        new Set(
+          limitedItems
+            .map((item) => item.imdbId?.toUpperCase())
+            .filter(Boolean)
+        )
       ) as string[];
       const votes = await this.voteRepo.listVotesForMovies(imdbIds);
       votesByImdb = votes.reduce((acc: Record<string, any[]>, vote: any) => {
@@ -67,7 +77,7 @@ export class CommunityTopService {
     }
     return {
       id: docId,
-      items: items.map((item) => {
+      items: limitedItems.map((item) => {
         const base: Record<string, unknown> = { ...item };
         if (includeVotes) {
           const key = (item.imdbId ?? "").toUpperCase();

@@ -103,7 +103,7 @@ Resposta: `{ user, token }`
 - `DELETE /:id` -> remove a entrada da lista
 
 ### Top da Comunidade (`/community-top`)
-- `GET /` -> retorna a lista atual de destaques da comunidade; administradores recebem tambem `votes` por filme com o nome/email/role de cada usuario e a nota atribuida
+- `GET /` -> retorna a lista atual de destaques da comunidade; aceita `limit` (default `10`, max `50`) e so retorna mais de 10 itens se solicitado explicitamente; administradores recebem tambem `votes` por filme com o nome/email/role de cada usuario e a nota atribuida
 - `PUT /` *(apenas admin)* -> `{ items: [{ imdbId, notes? }] }` substitui toda a lista apos validar/garantir os filmes referenciados
 
 Todas as rotas acima (exceto `/auth`) exigem enviar o JWT no header `Authorization: Bearer <token>`.
