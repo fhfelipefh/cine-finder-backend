@@ -14,8 +14,12 @@ O primeiro usuario registrado vira `admin` automaticamente e os demais sao `user
   - `favorites`: lista pessoal de filmes marcados por cada usuario.
 - **Politicas de seguranca**:
   - Todas as rotas (exceto `/auth`) exigem `Authorization: Bearer <token>`.
-  - Apenas administradores removem registros compartilhados (comments, votes, movies).
+  - Administradores seguem exclusivos para remover filmes/votos globais, mas comentarios podem ser apagados pelo autor ou por um admin.
   - Usuarios so manipulam dados pessoais (perfil, senha, favoritos) e seus proprios comentarios/votos.
+- **Ferramentas administrativas**:
+  - Listagem paginada dos comentarios mais recentes para moderacao rapida.
+  - Exclusao de usuarios (com limpeza de comentarios/votos/favoritos) diretamente pela API.
+  - Atualizacao da lista *Top da Comunidade*, mantendo um destaque curado de filmes.
 
 ## Configuracao
 
@@ -56,6 +60,7 @@ Resposta: `{ user, token }`
 - `PUT /me` -> `{ name?, email? }`
 - `PUT /me/password` -> `{ currentPassword, newPassword }`
 - `DELETE /me` -> remove completamente a conta e apaga comentarios, votos e favoritos associados
+- `DELETE /:id` *(apenas admin)* -> remove qualquer usuario e limpa seus comentarios/votos/favoritos
 
 ### Filmes (`/movies`)
 - `GET /` -> suporta `page`, `pageSize`
@@ -65,10 +70,11 @@ Resposta: `{ user, token }`
 - `DELETE /:id` *(apenas admin)*
 
 ### Comentarios (`/comments`)
+- `GET /admin/recent` *(apenas admin)* -> `page`, `pageSize`
 - `GET /:imdbId` -> `page`, `pageSize`
 - `POST /` -> `{ imdbId, rating, comment }`
 - `PUT /:id` -> `{ rating?, comment? }` (autor ou admin)
-- `DELETE /:id` *(apenas admin)*
+- `DELETE /:id` -> autor do comentario ou admin
 
 ### Votos (`/votes`)
 - `GET /me`
@@ -84,5 +90,9 @@ Resposta: `{ user, token }`
 - `POST /` -> `{ imdbId, notes? }` para marcar um filme como favorito
 - `PUT /:imdbId` -> `{ notes? }` atualiza a anotacao do favorito
 - `DELETE /:imdbId` -> desmarca o filme como favorito
+
+### Top da Comunidade (`/community-top`)
+- `GET /` -> retorna a lista atual de destaques da comunidade; administradores recebem tambem `votes` por filme com o nome/email/role de cada usuario e a nota atribuida
+- `PUT /` *(apenas admin)* -> `{ items: [{ imdbId, notes? }] }` substitui toda a lista apos validar/garantir os filmes referenciados
 
 Todas as rotas acima (exceto `/auth`) exigem enviar o JWT no header `Authorization: Bearer <token>`.

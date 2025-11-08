@@ -80,4 +80,8 @@ export class UserService {
     await this.repo.deleteById(userId);
     return { success: true as const };
   }
+
+  async deleteUserByAdmin(userId: string) {
+    return this.deleteAccount(userId);
+  }
 }

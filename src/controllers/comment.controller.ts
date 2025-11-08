@@ -50,6 +50,21 @@ export class CommentController {
     }
   }
 
+  async listRecent(req: Request, res: Response) {
+    try {
+      const page = Number.isNaN(Number(req.query.page))
+        ? 1
+        : Math.max(1, Number(req.query.page ?? 1));
+      const pageSize = Number.isNaN(Number(req.query.pageSize))
+        ? 20
+        : Math.min(100, Math.max(1, Number(req.query.pageSize ?? 20)));
+      const result = await this.service.listRecent(page, pageSize);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  }
+
   async create(req: Request, res: Response) {
     try {
       const user = this.ensureUser(req);

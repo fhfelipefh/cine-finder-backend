@@ -21,7 +21,12 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(6).max(64),
 });
 
+export const userIdParamSchema = z.object({
+  id: z.string().regex(/^[a-f\d]{24}$/i, "id invalido"),
+});
+
 export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type UserIdParam = z.infer<typeof userIdParamSchema>;

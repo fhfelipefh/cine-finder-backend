@@ -105,4 +105,20 @@ export class VoteRepository {
     const Vote = this.model();
     await Vote.deleteMany({ user: userId });
   }
+
+  async listVotesForMovies(imdbIds: string[]) {
+    if (!imdbIds.length) return [];
+    const Vote = this.model();
+    const normalized = Array.from(
+      new Set(
+        imdbIds
+          .filter((id) => Boolean(id))
+          .map((id) => id.toUpperCase())
+      )
+    );
+    return Vote.find({ imdbId: { $in: normalized } })
+      .sort({ updatedAt: -1 })
+      .populate("user", "name email role")
+      .lean({ virtuals: true });
+  }
 }

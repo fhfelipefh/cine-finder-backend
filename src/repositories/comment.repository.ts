@@ -20,6 +20,22 @@ export class CommentRepository {
     return { items, total, page, pageSize };
   }
 
+  async listRecent(page = 1, pageSize = 20) {
+    const skip = (page - 1) * pageSize;
+    const Comment = this.model();
+    const [items, total] = await Promise.all([
+      Comment.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .populate("user", "name email role")
+        .populate("movie", "title imdbId posterUrl year")
+        .lean({ virtuals: true }),
+      Comment.countDocuments({}),
+    ]);
+    return { items, total, page, pageSize };
+  }
+
   async getById(id: string) {
     const Comment = this.model();
     if (!mongoose.isValidObjectId(id)) return null;

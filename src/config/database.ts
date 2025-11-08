@@ -92,6 +92,23 @@ const FavoriteSchema = new Schema(
 FavoriteSchema.index({ user: 1, imdbId: 1 }, { unique: true });
 FavoriteSchema.set("toJSON", toJSONConfig);
 
+const CommunityTopSchema = new Schema(
+  {
+    slug: { type: String, required: true, unique: true },
+    items: [
+      {
+        imdbId: { type: String, required: true, uppercase: true },
+        notes: { type: String, default: "" },
+        movie: { type: Schema.Types.ObjectId, ref: "Movie", required: true },
+      },
+    ],
+    updatedBy: { type: Schema.Types.ObjectId, ref: "User", required: false },
+  },
+  { timestamps: true, versionKey: false, collection: "community_tops" }
+);
+CommunityTopSchema.index({ slug: 1 }, { unique: true });
+CommunityTopSchema.set("toJSON", toJSONConfig);
+
 export type UserDoc = InferSchemaType<typeof UserSchema> & {
   _id: mongoose.Types.ObjectId;
 };
@@ -107,12 +124,16 @@ export type VoteDoc = InferSchemaType<typeof VoteSchema> & {
 export type FavoriteDoc = InferSchemaType<typeof FavoriteSchema> & {
   _id: mongoose.Types.ObjectId;
 };
+export type CommunityTopDoc = InferSchemaType<typeof CommunityTopSchema> & {
+  _id: mongoose.Types.ObjectId;
+};
 
 let UserModelInternal: Model<UserDoc> | null = null;
 let MovieModelInternal: Model<MovieDoc> | null = null;
 let CommentModelInternal: Model<CommentDoc> | null = null;
 let VoteModelInternal: Model<VoteDoc> | null = null;
 let FavoriteModelInternal: Model<FavoriteDoc> | null = null;
+let CommunityTopModelInternal: Model<CommunityTopDoc> | null = null;
 
 export async function connectMongo(dbUrl?: string) {
   if (isConnected) return mongoose.connection;
@@ -141,6 +162,13 @@ export async function connectMongo(dbUrl?: string) {
   FavoriteModelInternal =
     mongoose.models.Favorite ||
     mongoose.model<FavoriteDoc>("Favorite", FavoriteSchema, "favorites");
+  CommunityTopModelInternal =
+    mongoose.models.CommunityTop ||
+    mongoose.model<CommunityTopDoc>(
+      "CommunityTop",
+      CommunityTopSchema,
+      "community_tops"
+    );
 
   await Promise.all([
     UserModelInternal.createCollection().catch(() => {}),
@@ -148,6 +176,7 @@ export async function connectMongo(dbUrl?: string) {
     CommentModelInternal.createCollection().catch(() => {}),
     VoteModelInternal.createCollection().catch(() => {}),
     FavoriteModelInternal.createCollection().catch(() => {}),
+    CommunityTopModelInternal.createCollection().catch(() => {}),
   ]);
 
   return mongoose.connection;
@@ -182,4 +211,10 @@ export function getFavoriteModel(): Model<FavoriteDoc> {
   if (!FavoriteModelInternal)
     throw new Error("Mongo nao conectado: FavoriteModel");
   return FavoriteModelInternal;
+}
+
+export function getCommunityTopModel(): Model<CommunityTopDoc> {
+  if (!CommunityTopModelInternal)
+    throw new Error("Mongo nao conectado: CommunityTopModel");
+  return CommunityTopModelInternal;
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   changePasswordSchema,
   updateProfileSchema,
+  userIdParamSchema,
 } from "../models/user.model.js";
 import { UserService } from "../services/user.service.js";
 
@@ -66,6 +67,17 @@ export class UserController {
       const current = this.ensureUser(req);
       await this.service.deleteAccount(current.id);
       res.json({ success: true, message: "Conta removida" });
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  }
+
+  async deleteUser(req: Request, res: Response) {
+    try {
+      this.ensureUser(req);
+      const { id } = userIdParamSchema.parse(req.params);
+      await this.service.deleteUserByAdmin(id);
+      res.json({ success: true, message: "Usuario removido" });
     } catch (error) {
       return this.handleError(res, error);
     }

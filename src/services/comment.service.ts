@@ -21,6 +21,10 @@ export class CommentService {
     return this.repo.listByImdb(imdbId, page, pageSize);
   }
 
+  async listRecent(page = 1, pageSize = 20) {
+    return this.repo.listRecent(page, pageSize);
+  }
+
   async create(user: RequestUser, payload: CreateCommentInput) {
     if (hasProfanity(payload.comment)) {
       throw new Error("Conteudo improprio detectado");
@@ -57,11 +61,13 @@ export class CommentService {
   }
 
   async remove(user: RequestUser, id: string) {
-    if (user.role !== "admin") {
-      throw new Error("Somente administradores podem remover comentarios");
-    }
     const existing = await this.repo.getById(id);
     if (!existing) throw new Error("Comentario nao encontrado");
+    const existingUserId = toStringId(existing.user);
+    const isOwner = existingUserId === user.id;
+    if (!isOwner && user.role !== "admin") {
+      throw new Error("Permissao negada");
+    }
     return this.repo.delete(id);
   }
 }
