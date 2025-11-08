@@ -20,6 +20,9 @@ O primeiro usuario registrado vira `admin` automaticamente e os demais sao `user
   - Listagem paginada dos comentarios mais recentes para moderacao rapida.
   - Exclusao de usuarios (com limpeza de comentarios/votos/favoritos) diretamente pela API.
   - Atualizacao da lista *Top da Comunidade*, mantendo um destaque curado de filmes.
+- **Lista pessoal ao estilo MyAnimeList**:
+  - Usuarios podem manter um diario completo de cada filme (status, nota, progresso, rewatches, prioridades, tags e notas).
+  - Endpoints para listar, atualizar rapidamente, consultar estatisticas agregadas e remover entradas.
 
 ## Configuracao
 
@@ -90,6 +93,14 @@ Resposta: `{ user, token }`
 - `POST /` -> `{ imdbId, notes? }` para marcar um filme como favorito
 - `PUT /:imdbId` -> `{ notes? }` atualiza a anotacao do favorito
 - `DELETE /:imdbId` -> desmarca o filme como favorito
+
+### Lista Pessoal (`/my-list`)
+- `GET /` -> lista paginada das entradas do usuario (`status`, `priority`, `search`, `sortBy`, `sortDirection`, `page`, `pageSize`)
+- `GET /stats` -> retorna contagens por status, media de notas, progresso total, rewatches e ultima atividade
+- `GET /:id` -> recupera uma entrada especifica do usuario
+- `POST /` -> cria/atualiza automaticamente a entrada de um filme `{ imdbId, status?, score?, progress?, rewatchCount?, priority?, startedAt?, finishedAt?, notes?, tags?, isHidden? }`
+- `PUT /:id` -> atualiza qualquer campo permitido acima
+- `DELETE /:id` -> remove a entrada da lista
 
 ### Top da Comunidade (`/community-top`)
 - `GET /` -> retorna a lista atual de destaques da comunidade; administradores recebem tambem `votes` por filme com o nome/email/role de cada usuario e a nota atribuida

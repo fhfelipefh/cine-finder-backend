@@ -6,6 +6,7 @@ import { userRoutes } from "./user.routes.js";
 import { movieRoutes } from "./movie.routes.js";
 import { favoriteRoutes } from "./favorite.routes.js";
 import { communityTopRoutes } from "./community-top.routes.js";
+import { myListRoutes } from "./my-list.routes.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.use("/votes", authenticate, voteRoutes);
 router.use("/users", authenticate, userRoutes);
 router.use("/favorites", authenticate, favoriteRoutes);
 router.use("/community-top", authenticate, communityTopRoutes);
+router.use("/my-list", authenticate, myListRoutes);
 
 export { router as apiRoutes };
